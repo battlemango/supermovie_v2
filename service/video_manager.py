@@ -114,6 +114,18 @@ class VideoManager:
         """
         return self.scene_manager.get_scene_field(scene_id, key, default)
     
+    def remove_scene(self, scene_id: str) -> bool:
+        """
+        씬 삭제
+        
+        Args:
+            scene_id (str): 삭제할 씬의 ID
+            
+        Returns:
+            bool: 삭제 성공 여부
+        """
+        return self.scene_manager.remove_scene(scene_id)
+    
     def save_video_data(self):
         """
         현재 비디오 데이터 저장 (SceneManager를 통해 저장)

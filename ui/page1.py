@@ -60,9 +60,23 @@ def show():
     if scenes:
         for idx, scene in enumerate(scenes, 1):
             scene_type = scene.get('type', 'type1')
+            scene_id = scene.get('id')
             
-            # 씬 헤더 표시
-            st.markdown(f"### 씬 {idx} (Type: {scene_type})")
+            # 씬 헤더와 삭제 버튼을 나란히 배치
+            col_header, col_delete = st.columns([10, 1])
+            
+            with col_header:
+                # 씬 헤더 표시
+                st.markdown(f"### 씬 {idx} (Type: {scene_type})")
+            
+            with col_delete:
+                # 삭제 버튼 (X 표시)
+                if st.button("❌", key=f"delete_{scene_id}", help="씬 삭제"):
+                    if video_manager.remove_scene(scene_id):
+                        st.success("씬이 삭제되었습니다.")
+                        st.rerun()
+                    else:
+                        st.error("씬 삭제에 실패했습니다.")
             
             # 씬 타입에 따라 해당하는 UI 렌더링 함수 호출
             if scene_type == "type1":
