@@ -4,6 +4,7 @@ UI 컴포넌트 모듈
 """
 
 from ui.components.text_component import render_text_input
+from ui.components.image_component import render_image_input
 
-__all__ = ['render_text_input']
+__all__ = ['render_text_input', 'render_image_input']
 
