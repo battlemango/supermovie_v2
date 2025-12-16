@@ -19,6 +19,7 @@ def load_dialog():
     
     # 각 프로젝트를 클릭 가능한 버튼으로 표시
     for project in projects:
+        # Project 객체는 딕셔너리처럼 접근 가능 (__getitem__ 구현)
         # 폴더 이름에서 타임스탬프와 프로젝트 이름 분리
         if "_" in project['folder_name']:
             timestamp, name = project['folder_name'].split("_", 1)
@@ -41,7 +42,7 @@ def load_dialog():
         
         # 프로젝트 선택 버튼
         if st.button(f"{emoji}{display_name}", key=f"select_{project['folder_name']}", use_container_width=True, type=button_type):
-            # 현재 프로젝트 업데이트
+            # 현재 프로젝트 업데이트 (Project 객체 전달)
             project_manager.load_project(project)
             st.success(f"✅ '{project['project_name']}' 프로젝트를 로드했습니다.")
             st.rerun()

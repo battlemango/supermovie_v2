@@ -3,6 +3,57 @@ import datetime
 from pathlib import Path
 from service.video_manager import video_manager
 
+
+class Project:
+    """프로젝트 정보를 담는 클래스 - 일관된 인터페이스 제공"""
+    
+    def __init__(self, project_name, folder_name, path, timestamp=None):
+        """
+        프로젝트 정보 초기화
+        
+        Args:
+            project_name (str): 프로젝트 이름
+            folder_name (str): 폴더 이름 (타임스탬프 포함)
+            path (str or Path): 프로젝트 경로
+            timestamp (str, optional): 타임스탬프
+        """
+        self.project_name = project_name
+        self.folder_name = folder_name
+        # path를 Path 객체로 변환하여 저장 (일관성 유지)
+        self.path = Path(path) if not isinstance(path, Path) else path
+        self.timestamp = timestamp or ""
+    
+    def __getitem__(self, key):
+        """딕셔너리처럼 접근 가능하도록 구현 (기존 코드 호환성)"""
+        # project_path와 path 모두 지원 (하위 호환성)
+        if key == "project_path":
+            return str(self.path)
+        elif key == "path":
+            return str(self.path)
+        elif hasattr(self, key):
+            return getattr(self, key)
+        else:
+            raise KeyError(f"'{key}' 키가 존재하지 않습니다.")
+    
+    def __contains__(self, key):
+        """'in' 연산자 지원"""
+        return key in ["project_name", "folder_name", "path", "project_path", "timestamp"]
+    
+    def to_dict(self):
+        """딕셔너리로 변환 (기존 코드 호환성)"""
+        return {
+            "project_name": self.project_name,
+            "folder_name": self.folder_name,
+            "path": str(self.path),
+            "project_path": str(self.path),  # 하위 호환성을 위해 둘 다 포함
+            "timestamp": self.timestamp
+        }
+    
+    def __repr__(self):
+        """프로젝트 정보 문자열 표현"""
+        return f"Project(name='{self.project_name}', path='{self.path}')"
+
+
 class ProjectManager:
     """프로젝트 관리 클래스"""
     
@@ -49,18 +100,27 @@ class ProjectManager:
             subfolders = ['data', 'output', 'config', 'logs']
             for subfolder in subfolders:
                 (project_path / subfolder).mkdir(exist_ok=True)
-                        
-            project_info = {
+            
+            # Project 객체 생성
+            project = Project(
+                project_name=project_name,
+                folder_name=folder_name,
+                path=project_path,
+                timestamp=timestamp
+            )
+            
+            self.load_project(project)
+            
+            # 반환값은 딕셔너리 형태로 (기존 코드 호환성)
+            return {
                 "success": True,
                 "project_name": project_name,
                 "folder_name": folder_name,
                 "project_path": str(project_path),
+                "path": str(project_path),  # 일관성을 위해 path도 포함
+                "timestamp": timestamp,
                 "message": f"프로젝트 '{project_name}'가 성공적으로 생성되었습니다."
             }
-            
-            self.load_project(project_info)
-            
-            return project_info
             
         except Exception as e:
             return {
@@ -71,7 +131,7 @@ class ProjectManager:
             }
     
     def get_projects_list(self):
-        """생성된 프로젝트 목록 반환"""
+        """생성된 프로젝트 목록 반환 (Project 객체 리스트)"""
         if not self.base_dir.exists():
             return []
         
@@ -82,21 +142,26 @@ class ProjectManager:
                 folder_name = item.name
                 if "_" in folder_name:
                     timestamp, name = folder_name.split("_", 1)
-                    projects.append({
-                        "folder_name": folder_name,
-                        "project_name": name,
-                        "timestamp": timestamp,
-                        "path": str(item)
-                    })
+                    # Project 객체 생성
+                    project = Project(
+                        project_name=name,
+                        folder_name=folder_name,
+                        path=item,
+                        timestamp=timestamp
+                    )
+                    projects.append(project)
                 else:
-                    projects.append({
-                        "folder_name": folder_name,
-                        "project_name": folder_name,
-                        "timestamp": "",
-                        "path": str(item)
-                    })
+                    # 타임스탬프가 없는 경우
+                    project = Project(
+                        project_name=folder_name,
+                        folder_name=folder_name,
+                        path=item,
+                        timestamp=""
+                    )
+                    projects.append(project)
         
-        return sorted(projects, key=lambda x: x["timestamp"], reverse=True)
+        # 타임스탬프 기준으로 정렬 (최신순)
+        return sorted(projects, key=lambda x: x.timestamp, reverse=True)
     
     def get_current_project(self):
         """현재 선택된 프로젝트 정보 반환"""
