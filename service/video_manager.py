@@ -76,6 +76,19 @@ class VideoManager:
         # SceneManager를 통해 씬 추가
         return self.scene_manager.add_scene(text=text, scene_type=scene_type)
     
+    def update_scene_text(self, scene_id: str, text: str) -> bool:
+        """
+        씬의 텍스트 업데이트
+        
+        Args:
+            scene_id (str): 업데이트할 씬의 ID
+            text (str): 새로운 텍스트 내용
+            
+        Returns:
+            bool: 업데이트 성공 여부
+        """
+        return self.scene_manager.update_scene_text(scene_id, text)
+    
     def save_video_data(self):
         """
         현재 비디오 데이터 저장 (SceneManager를 통해 저장)

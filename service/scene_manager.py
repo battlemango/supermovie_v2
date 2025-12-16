@@ -147,6 +147,24 @@ class SceneManager:
             return True
         return False
     
+    def update_scene_text(self, scene_id: str, text: str) -> bool:
+        """
+        씬의 텍스트 업데이트
+        
+        Args:
+            scene_id (str): 업데이트할 씬의 ID
+            text (str): 새로운 텍스트 내용
+            
+        Returns:
+            bool: 업데이트 성공 여부
+        """
+        scene = self.get_scene_by_id(scene_id)
+        if scene:
+            scene.text = text
+            self.save()
+            return True
+        return False
+    
     def get_video_data(self) -> dict:
         """
         딕셔너리 형태로 비디오 데이터 반환 (기존 코드 호환성)
