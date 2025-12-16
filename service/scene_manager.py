@@ -149,7 +149,8 @@ class SceneManager:
     
     def update_scene_text(self, scene_id: str, text: str) -> bool:
         """
-        씬의 텍스트 업데이트
+        씬의 텍스트 업데이트 (기존 코드 호환성)
+        내부적으로 update_scene_field를 사용합니다.
         
         Args:
             scene_id (str): 업데이트할 씬의 ID
@@ -158,12 +159,43 @@ class SceneManager:
         Returns:
             bool: 업데이트 성공 여부
         """
+        return self.update_scene_field(scene_id, "text", text)
+    
+    def update_scene_field(self, scene_id: str, key: str, value) -> bool:
+        """
+        씬의 특정 필드 업데이트 (동적 필드 지원)
+        
+        Args:
+            scene_id (str): 업데이트할 씬의 ID
+            key (str): 필드 키
+            value: 설정할 값
+            
+        Returns:
+            bool: 업데이트 성공 여부
+        """
         scene = self.get_scene_by_id(scene_id)
         if scene:
-            scene.text = text
+            scene.set_field(key, value)
             self.save()
             return True
         return False
+    
+    def get_scene_field(self, scene_id: str, key: str, default=None):
+        """
+        씬의 특정 필드 값 가져오기 (동적 필드 지원)
+        
+        Args:
+            scene_id (str): 씬의 ID
+            key (str): 필드 키
+            default: 기본값 (키가 없을 때 반환)
+            
+        Returns:
+            필드 값 또는 default
+        """
+        scene = self.get_scene_by_id(scene_id)
+        if scene:
+            return scene.get_field(key, default)
+        return default
     
     def get_video_data(self) -> dict:
         """
