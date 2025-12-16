@@ -147,19 +147,6 @@ class SceneManager:
             return True
         return False
     
-    def update_scene_text(self, scene_id: str, text: str) -> bool:
-        """
-        씬의 텍스트 업데이트 (기존 코드 호환성)
-        내부적으로 update_scene_field를 사용합니다.
-        
-        Args:
-            scene_id (str): 업데이트할 씬의 ID
-            text (str): 새로운 텍스트 내용
-            
-        Returns:
-            bool: 업데이트 성공 여부
-        """
-        return self.update_scene_field(scene_id, "text", text)
     
     def update_scene_field(self, scene_id: str, key: str, value) -> bool:
         """

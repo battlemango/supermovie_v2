@@ -10,7 +10,7 @@ def _save_scene_text(scene_id: str):
     if textarea_key in st.session_state:
         new_text = st.session_state[textarea_key]
         # JSON에 저장
-        if video_manager.update_scene_text(scene_id, new_text):
+        if video_manager.update_scene_field(scene_id, "text", new_text):
             st.success("✅ 저장되었습니다!")
 
 
@@ -31,7 +31,7 @@ def render_type1(scene: Dict[str, Any]):
         value=current_text,
         key=f"type1_textarea_{scene_id}",
         help="텍스트를 입력하세요. 변경 시 자동으로 저장됩니다.",
-        height=200,
+        height=100,
         on_change=_save_scene_text,
         args=(scene_id,)  # 콜백 함수에 scene_id 전달
     )

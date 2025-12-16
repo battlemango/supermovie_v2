@@ -58,22 +58,27 @@ def show():
     scenes = video_data.get("scenes", [])
     
     if scenes:
-        st.subheader("📹 씬 목록")
         for idx, scene in enumerate(scenes, 1):
             scene_type = scene.get('type', 'type1')
             
+            # 씬 헤더 표시
+            st.markdown(f"### 씬 {idx} (Type: {scene_type})")
+            
             # 씬 타입에 따라 해당하는 UI 렌더링 함수 호출
-            with st.expander(f"씬 {idx}: {scene.get('text', 'N/A')} (Type: {scene_type})", expanded=False):
-                if scene_type == "type1":
-                    render_type1(scene)
-                elif scene_type == "type2":
-                    render_type2(scene)
-                elif scene_type == "type3":
-                    render_type3(scene)
-                else:
-                    # 알 수 없는 타입인 경우 기본 UI 표시
-                    st.warning(f"알 수 없는 씬 타입: {scene_type}")
-                    st.json(scene)
+            if scene_type == "type1":
+                render_type1(scene)
+            elif scene_type == "type2":
+                render_type2(scene)
+            elif scene_type == "type3":
+                render_type3(scene)
+            else:
+                # 알 수 없는 타입인 경우 기본 UI 표시
+                st.warning(f"알 수 없는 씬 타입: {scene_type}")
+                st.json(scene)
+            
+            # 씬 사이 구분선 (마지막 씬이 아니면)
+            if idx < len(scenes):
+                st.divider()
     else:
         st.info("추가된 씬이 없습니다. + 버튼을 눌러 씬을 추가하세요.")
     

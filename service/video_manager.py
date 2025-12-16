@@ -17,7 +17,6 @@ class VideoManager:
         """프로젝트가 로드되었을 때 호출되는 메서드"""
         self.current_project = project
 
-        print("on_project_loaded")
         
         # Project 객체 또는 딕셔너리 모두 지원
         if project:
@@ -37,7 +36,6 @@ class VideoManager:
             if project_path:
                 video_json_path = project_path / 'video.json'
                 
-                print(f"on_project_loaded: {project_path}")
                 
                 # SceneManager에 경로 설정 및 로드
                 self.scene_manager.set_path(video_json_path)
@@ -75,19 +73,6 @@ class VideoManager:
         
         # SceneManager를 통해 씬 추가
         return self.scene_manager.add_scene(text=text, scene_type=scene_type)
-    
-    def update_scene_text(self, scene_id: str, text: str) -> bool:
-        """
-        씬의 텍스트 업데이트
-        
-        Args:
-            scene_id (str): 업데이트할 씬의 ID
-            text (str): 새로운 텍스트 내용
-            
-        Returns:
-            bool: 업데이트 성공 여부
-        """
-        return self.scene_manager.update_scene_text(scene_id, text)
     
     def update_scene_field(self, scene_id: str, key: str, value) -> bool:
         """
