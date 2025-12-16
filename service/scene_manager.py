@@ -79,12 +79,13 @@ class SceneManager:
             print(f"video.json 저장 오류: {e}")
             return False
     
-    def add_scene(self, text: str = "test") -> Optional[Scene]:
+    def add_scene(self, text: str = "test", scene_type: str = "type1") -> Optional[Scene]:
         """
         새로운 씬 추가
         
         Args:
             text (str): 씬의 텍스트 내용 (기본값: "test")
+            scene_type (str): 씬의 타입 (기본값: "type1")
             
         Returns:
             Scene: 추가된 Scene 객체 또는 None (경로가 설정되지 않은 경우)
@@ -94,7 +95,7 @@ class SceneManager:
             return None
         
         # 새로운 씬 생성
-        new_scene = Scene(text=text)
+        new_scene = Scene(text=text, scene_type=scene_type)
         
         # 씬 리스트에 추가
         self.scenes.append(new_scene)

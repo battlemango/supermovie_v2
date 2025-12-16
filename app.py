@@ -50,8 +50,6 @@ if st.sidebar.button("페이지 3", use_container_width=True, key="page3_btn"):
 
 
 
-# 구분선
-st.divider()
 
 
 # 페이지 렌더링
@@ -61,8 +59,3 @@ elif st.session_state.current_page == 'page2':
     page2.show()
 elif st.session_state.current_page == 'page3':
     page3.show()
-
-# 푸터
-st.divider()
-st.markdown("---")
-st.markdown("*Made with ❤️ using Streamlit*")

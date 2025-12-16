@@ -5,17 +5,19 @@ from typing import Optional
 class Scene:
     """씬 정보를 담는 클래스"""
     
-    def __init__(self, scene_id: Optional[str] = None, text: str = "test"):
+    def __init__(self, scene_id: Optional[str] = None, text: str = "test", scene_type: str = "type1"):
         """
         씬 정보 초기화
         
         Args:
             scene_id (str, optional): 씬의 고유 ID (없으면 자동 생성)
             text (str): 씬의 텍스트 내용 (기본값: "test")
+            scene_type (str): 씬의 타입 (기본값: "type1")
         """
         # ID가 없으면 UUID로 생성
         self.id = scene_id if scene_id else str(uuid.uuid4())
         self.text = text
+        self.type = scene_type
     
     @classmethod
     def from_dict(cls, data: dict):
@@ -30,7 +32,8 @@ class Scene:
         """
         return cls(
             scene_id=data.get("id"),
-            text=data.get("text", "test")
+            text=data.get("text", "test"),
+            scene_type=data.get("type", "type1")  # 기본값 type1
         )
     
     def to_dict(self) -> dict:
@@ -42,7 +45,8 @@ class Scene:
         """
         return {
             "id": self.id,
-            "text": self.text
+            "text": self.text,
+            "type": self.type
         }
     
     def __getitem__(self, key):
@@ -51,14 +55,16 @@ class Scene:
             return self.id
         elif key == "text":
             return self.text
+        elif key == "type":
+            return self.type
         else:
             raise KeyError(f"'{key}' 키가 존재하지 않습니다.")
     
     def __contains__(self, key):
         """'in' 연산자 지원"""
-        return key in ["id", "text"]
+        return key in ["id", "text", "type"]
     
     def __repr__(self):
         """씬 정보 문자열 표현"""
-        return f"Scene(id='{self.id[:8]}...', text='{self.text}')"
+        return f"Scene(id='{self.id[:8]}...', text='{self.text}', type='{self.type}')"
 

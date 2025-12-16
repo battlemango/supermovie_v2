@@ -57,12 +57,13 @@ class VideoManager:
         """
         return self.scene_manager.get_video_data()
     
-    def add_scene(self, text="test"):
+    def add_scene(self, text="test", scene_type="type1"):
         """
         새로운 씬을 추가하는 함수
         
         Args:
             text (str): 씬의 텍스트 내용 (기본값: "test")
+            scene_type (str): 씬의 타입 (기본값: "type1")
             
         Returns:
             Scene: 추가된 Scene 객체 또는 None (프로젝트가 로드되지 않은 경우)
@@ -73,7 +74,7 @@ class VideoManager:
             return None
         
         # SceneManager를 통해 씬 추가
-        return self.scene_manager.add_scene(text=text)
+        return self.scene_manager.add_scene(text=text, scene_type=scene_type)
     
     def save_video_data(self):
         """
