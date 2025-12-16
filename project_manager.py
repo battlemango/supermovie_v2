@@ -167,6 +167,76 @@ class ProjectManager:
         """현재 선택된 프로젝트 정보 반환"""
         return self.current_project
     
+    def get_project_path(self):
+        """
+        현재 프로젝트의 경로를 반환
+        
+        Returns:
+            Path: 프로젝트 경로 객체 또는 None
+        """
+        if not self.current_project:
+            return None
+        
+        if hasattr(self.current_project, 'path'):
+            return self.current_project.path
+        elif 'project_path' in self.current_project:
+            return Path(self.current_project['project_path'])
+        elif 'path' in self.current_project:
+            return Path(self.current_project['path'])
+        else:
+            return None
+    
+    def save_image_file(self, uploaded_file, filename: str, subfolder: str = "image") -> str:
+        """
+        업로드된 이미지 파일을 프로젝트 폴더에 저장
+        
+        Args:
+            uploaded_file: 업로드된 파일 객체 (Streamlit의 UploadedFile)
+            filename (str): 저장할 파일명
+            subfolder (str): 저장할 하위 폴더명 (기본값: "image")
+            
+        Returns:
+            str: 저장된 파일의 상대 경로 (예: "image/filename.png") 또는 None (실패 시)
+        """
+        project_path = self.get_project_path()
+        if not project_path:
+            return None
+        
+        try:
+            # 하위 폴더 생성
+            target_folder = project_path / subfolder
+            target_folder.mkdir(exist_ok=True)
+            
+            # 파일 경로
+            file_path = target_folder / filename
+            
+            # 파일 저장
+            with open(file_path, 'wb') as f:
+                f.write(uploaded_file.getbuffer())
+            
+            # 상대 경로 반환
+            relative_path = f"{subfolder}/{filename}"
+            return relative_path
+        except Exception as e:
+            print(f"이미지 저장 오류: {e}")
+            return None
+    
+    def get_image_path(self, relative_path: str) -> Path:
+        """
+        상대 경로를 기반으로 이미지의 전체 경로 반환
+        
+        Args:
+            relative_path (str): 상대 경로 (예: "image/filename.png")
+            
+        Returns:
+            Path: 전체 경로 또는 None
+        """
+        project_path = self.get_project_path()
+        if not project_path:
+            return None
+        
+        return project_path / relative_path
+    
     def delete_project(self, folder_name):
         """프로젝트 삭제"""
         try:

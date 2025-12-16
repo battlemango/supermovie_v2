@@ -1,8 +1,9 @@
 import streamlit as st
 from typing import Dict, Any
 from service.video_manager import video_manager
+from project_manager import project_manager
 from PIL import Image
-import io
+from pathlib import Path
 
 
 def _save_scene_text(scene_id: str):
@@ -14,6 +15,29 @@ def _save_scene_text(scene_id: str):
         # JSON에 저장
         if video_manager.update_scene_field(scene_id, "text", new_text):
             st.success("✅ 저장되었습니다!")
+
+
+def _save_scene_image(scene_id: str):
+    """씬 이미지 저장 콜백 함수 - 파일이 업로드될 때만 실행됨"""
+    # 세션 상태에서 업로드된 파일 가져오기
+    uploader_key = f"type1_image_{scene_id}"
+    if uploader_key in st.session_state and st.session_state[uploader_key] is not None:
+        uploaded_file = st.session_state[uploader_key]
+        
+        try:
+            # 파일명 생성 (씬 ID + 확장자)
+            file_extension = Path(uploaded_file.name).suffix
+            image_filename = f"{scene_id}{file_extension}"
+            
+            # project_manager를 통해 이미지 저장
+            relative_path = project_manager.save_image_file(uploaded_file, image_filename, "image")
+            
+            if relative_path:
+                # 씬에 이미지 경로 저장
+                if video_manager.update_scene_field(scene_id, "image", relative_path):
+                    st.rerun()
+        except Exception as e:
+            st.error(f"이미지 저장 중 오류가 발생했습니다: {e}")
 
 
 def render_type1(scene: Dict[str, Any]):
@@ -42,41 +66,50 @@ def render_type1(scene: Dict[str, Any]):
     col1, col2 = st.columns(2)
     
     with col1:
-        # 이미지 업로드 영역 (라벨 숨김)
+        # 이미지 업로드 영역 (라벨 숨김) - on_change로 업로드 시 한 번만 저장
         uploaded_file = st.file_uploader(
             "이미지를 드래그하거나 클릭하여 업로드하세요",
             type=['png', 'jpg', 'jpeg', 'gif', 'webp'],
             key=f"type1_image_{scene_id}",
             label_visibility="hidden",  # 라벨 숨기기
-            help="이미지 파일을 업로드하면 여기에 표시됩니다."
+            help="이미지 파일을 업로드하면 여기에 표시됩니다.",
+            on_change=_save_scene_image,  # 파일 업로드 시 한 번만 실행
+            args=(scene_id,)  # 콜백 함수에 scene_id 전달
         )
     
     with col2:
-        # 업로드된 이미지가 있으면 표시
-        if uploaded_file is not None:
+        # 저장된 이미지 경로 가져오기
+        saved_image_path = video_manager.get_scene_field(scene_id, "image", None)
+        
+        # 저장된 이미지가 있으면 표시
+        if saved_image_path:
             try:
-                # 이미지 읽기 (원본 그대로)
-                image = Image.open(uploaded_file)
+                # project_manager를 통해 이미지 경로 가져오기
+                full_image_path = project_manager.get_image_path(saved_image_path)
                 
-                # 이미지 표시 (높이만 70px로 제한, 비율 유지, 원본 이미지는 그대로)
-                st.image(
-                    image,
-                    width=None,
-                    use_container_width=False
-                )
-                # CSS로 이미지 높이만 제한 (원본 이미지는 리사이즈하지 않음, 비율 유지)
-                st.markdown(
-                    """
-                    <style>
-                    .stImage img {
-                        max-height: 100px !important;
-                        width: auto !important;
-                        object-fit: contain !important;
-                    }
-                    </style>
-                    """,
-                    unsafe_allow_html=True
-                )
+                if full_image_path and full_image_path.exists():
+                    # 이미지 읽기 및 표시
+                    image = Image.open(full_image_path)
+                    st.image(
+                        image,
+                        width=None,
+                        use_container_width=False
+                    )
+                    # CSS로 이미지 높이만 제한 (원본 이미지는 리사이즈하지 않음, 비율 유지)
+                    st.markdown(
+                        """
+                        <style>
+                        .stImage img {
+                            max-height: 100px !important;
+                            width: auto !important;
+                            object-fit: contain !important;
+                        }
+                        </style>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                elif full_image_path:
+                    st.warning(f"이미지 파일을 찾을 수 없습니다: {saved_image_path}")
             except Exception as e:
                 st.error(f"이미지를 불러오는 중 오류가 발생했습니다: {e}")
         else:
