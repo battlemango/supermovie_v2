@@ -61,69 +61,49 @@ def show():
             if not scenes:
                 st.warning("생성할 씬이 없습니다.")
             else:
-                # 각 씬의 비디오 생성
-                from ui.scene_types import get_scene_class
-                from moviepy import VideoFileClip, concatenate_videoclips
-                from project_manager import project_manager
-                from pathlib import Path
+                # VideoGenerator를 사용하여 비디오 생성
+                from service.video_generator import video_generator
                 
-                video_paths = []
+                # UI 요소 생성
                 progress_bar = st.progress(0)
                 status_text = st.empty()
                 
-                # 각 씬의 비디오 생성
-                for idx, scene in enumerate(scenes):
-                    scene_type = scene.get('type', 'type1')
-                    SceneClass = get_scene_class(scene_type)
-                    
-                    if SceneClass:
-                        status_text.text(f"씬 {idx + 1}/{len(scenes)} 생성 중...")
-                        scene_instance = SceneClass(scene)
-                        video_path = scene_instance.generate_video_structure()
-                        
-                        if video_path:
-                            # 상대 경로를 전체 경로로 변환
-                            project_path = project_manager.get_project_path()
-                            if project_path:
-                                full_path = project_path / video_path
-                                if full_path.exists():
-                                    video_paths.append(str(full_path))
-                        else:
-                            st.warning(f"씬 {idx + 1}의 비디오 생성에 실패했습니다.")
-                    else:
-                        st.warning(f"알 수 없는 씬 타입: {scene_type}")
-                    
-                    progress_bar.progress((idx + 1) / len(scenes))
+                # 콜백 함수 정의
+                def update_progress(progress: float):
+                    """진행률 업데이트 콜백"""
+                    progress_bar.progress(progress)
                 
-                # 모든 씬의 비디오를 concat하여 전체 영상 생성
-                if video_paths:
-                    try:
-                        status_text.text("비디오 합치는 중...")
-                        clips = [VideoFileClip(path) for path in video_paths]
-                        final_video = concatenate_videoclips(clips)
-                        
-                        # 전체 비디오 저장
-                        project_path = project_manager.get_project_path()
-                        if project_path:
-                            output_path = project_path / "output" / "final_output.mp4"
-                            final_video.write_videofile(str(output_path), fps=24)
-                            
-                            # 리소스 정리
-                            final_video.close()
-                            for clip in clips:
-                                clip.close()
-                            
-                            st.success(f"전체 비디오 생성 완료: {output_path}")
-                            status_text.text("완료!")
-                        else:
-                            st.error("프로젝트 경로를 찾을 수 없습니다.")
-                    except Exception as e:
-                        st.error(f"비디오 합치기 중 오류 발생: {e}")
-                else:
-                    st.warning("생성된 비디오가 없습니다.")
+                def update_status(status: str):
+                    """상태 메시지 업데이트 콜백"""
+                    status_text.text(status)
                 
+                def show_warning(message: str):
+                    """경고 메시지 콜백"""
+                    st.warning(message)
+                
+                def show_error(message: str):
+                    """에러 메시지 콜백"""
+                    st.error(message)
+                
+                def show_success(message: str):
+                    """성공 메시지 콜백"""
+                    st.success(message)
+                    status_text.text("완료!")
+                
+                # 최종 비디오 생성
+                final_path = video_generator.generate_final_video(
+                    scenes=scenes,
+                    progress_callback=update_progress,
+                    status_callback=update_status,
+                    warning_callback=show_warning,
+                    error_callback=show_error,
+                    success_callback=show_success
+                )
+                
+                # UI 요소 정리
                 progress_bar.empty()
-                status_text.empty()
+                if not final_path:
+                    status_text.empty()
     
     # 현재 씬 목록 표시
     video_data = video_manager.get_video_data()
