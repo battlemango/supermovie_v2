@@ -35,8 +35,9 @@ def render_image_input(scene: Dict[str, Any], field: str = "image"):
                 
                 if relative_path:
                     # 씬에 이미지 경로 저장
-                    if video_manager.update_scene_field(scene_id, field, relative_path):
-                        st.rerun()
+                    # 콜백 함수 내에서는 st.rerun()이 작동하지 않으므로 제거
+                    # Streamlit이 콜백 완료 후 자동으로 앱을 다시 실행함
+                    video_manager.update_scene_field(scene_id, field, relative_path)
             except Exception as e:
                 st.error(f"이미지 저장 중 오류가 발생했습니다: {e}")
     

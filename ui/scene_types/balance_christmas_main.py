@@ -15,15 +15,22 @@ class BalanceChristmasMain(BaseSceneType):
         """Type 1 씬의 UI를 렌더링"""
         # 텍스트 입력 컴포넌트 사용
         render_text_input(self.scene, "title", label="title")
-        render_text_input(self.scene, "choice_a", label="A")
-        render_text_input(self.scene, "choice_b", label="B")
+        
+        # choice_a와 a_image를 한 컬럼에, choice_b와 b_image를 다른 컬럼에 배치
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # A 선택지와 A 이미지를 같은 컬럼에 배치
+            render_text_input(self.scene, "choice_a", label="A")
+            render_image_input(self.scene, "a_image")
+            render_audio_input(self.scene, "a_audio")
+        
+        with col2:
+            # B 선택지와 B 이미지를 같은 컬럼에 배치
+            render_text_input(self.scene, "choice_b", label="B")
+            render_image_input(self.scene, "b_image")
+            render_audio_input(self.scene, "b_audio")
 
-        # 이미지 입력 컴포넌트 사용
-        render_image_input(self.scene, "a_image")
-        render_image_input(self.scene, "b_image")
-
-        render_audio_input(self.scene, "a_audio")
-        render_audio_input(self.scene, "b_audio")
     
     def generate_video_structure(self) -> str:
         title = self.scene.get("title", "")
