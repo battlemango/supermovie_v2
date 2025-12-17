@@ -61,24 +61,69 @@ def show():
             if not scenes:
                 st.warning("생성할 씬이 없습니다.")
             else:
-                # 각 씬의 타입에 따라 비디오 구조 생성
+                # 각 씬의 비디오 생성
                 from ui.scene_types import get_scene_class
+                from moviepy import VideoFileClip, concatenate_videoclips
+                from project_manager import project_manager
+                from pathlib import Path
                 
-                video_structures = []
-                for scene in scenes:
+                video_paths = []
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                
+                # 각 씬의 비디오 생성
+                for idx, scene in enumerate(scenes):
                     scene_type = scene.get('type', 'type1')
                     SceneClass = get_scene_class(scene_type)
                     
                     if SceneClass:
+                        status_text.text(f"씬 {idx + 1}/{len(scenes)} 생성 중...")
                         scene_instance = SceneClass(scene)
-                        structure = scene_instance.generate_video_structure()
-                        video_structures.append(structure)
+                        video_path = scene_instance.generate_video_structure()
+                        
+                        if video_path:
+                            # 상대 경로를 전체 경로로 변환
+                            project_path = project_manager.get_project_path()
+                            if project_path:
+                                full_path = project_path / video_path
+                                if full_path.exists():
+                                    video_paths.append(str(full_path))
+                        else:
+                            st.warning(f"씬 {idx + 1}의 비디오 생성에 실패했습니다.")
                     else:
                         st.warning(f"알 수 없는 씬 타입: {scene_type}")
+                    
+                    progress_bar.progress((idx + 1) / len(scenes))
                 
-                # 생성된 구조 표시 (임시)
-                st.json({"scenes": video_structures})
-                st.info("비디오 생성 구조가 준비되었습니다. (아직 실제 생성은 구현되지 않음)")
+                # 모든 씬의 비디오를 concat하여 전체 영상 생성
+                if video_paths:
+                    try:
+                        status_text.text("비디오 합치는 중...")
+                        clips = [VideoFileClip(path) for path in video_paths]
+                        final_video = concatenate_videoclips(clips)
+                        
+                        # 전체 비디오 저장
+                        project_path = project_manager.get_project_path()
+                        if project_path:
+                            output_path = project_path / "output" / "final_output.mp4"
+                            final_video.write_videofile(str(output_path), fps=24)
+                            
+                            # 리소스 정리
+                            final_video.close()
+                            for clip in clips:
+                                clip.close()
+                            
+                            st.success(f"전체 비디오 생성 완료: {output_path}")
+                            status_text.text("완료!")
+                        else:
+                            st.error("프로젝트 경로를 찾을 수 없습니다.")
+                    except Exception as e:
+                        st.error(f"비디오 합치기 중 오류 발생: {e}")
+                else:
+                    st.warning("생성된 비디오가 없습니다.")
+                
+                progress_bar.empty()
+                status_text.empty()
     
     # 현재 씬 목록 표시
     video_data = video_manager.get_video_data()
@@ -93,7 +138,8 @@ def show():
             scene_id = scene.get('id')
             
             # 씬 헤더와 삭제 버튼, 비디오 생성 버튼을 나란히 배치
-            col_header, col_video, col_delete = st.columns([8, 1, 1])
+            col_header, col_video, col_delete = st.columns([8, 1, 1
+            ])
             
             with col_header:
                 # 씬 헤더 표시
@@ -102,13 +148,16 @@ def show():
             with col_video:
                 # 비디오 생성 버튼 (이 씬만)
                 if st.button("🎬", key=f"video_{scene_id}", help="이 씬만 비디오 생성"):
-                    # 해당 씬의 비디오 구조 생성
+                    # 해당 씬의 비디오 생성
                     SceneClass = get_scene_class(scene_type)
                     if SceneClass:
                         scene_instance = SceneClass(scene)
-                        structure = scene_instance.generate_video_structure()
-                        st.json(structure)
-                        st.info(f"씬 {idx}의 비디오 생성 구조가 준비되었습니다. (아직 실제 생성은 구현되지 않음)")
+                        video_path = scene_instance.generate_video_structure()
+                        
+                        if video_path:
+                            st.success(f"비디오 생성 완료: {video_path}")
+                        else:
+                            st.error("비디오 생성에 실패했습니다.")
                     else:
                         st.warning(f"알 수 없는 씬 타입: {scene_type}")
             

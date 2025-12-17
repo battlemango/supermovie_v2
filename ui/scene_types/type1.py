@@ -17,19 +17,14 @@ class Type1Scene(BaseSceneType):
         # 이미지 입력 컴포넌트 사용
         render_image_input(self.scene, "image")
     
-    def generate_video_structure(self) -> Dict[str, Any]:
+    def generate_video_structure(self) -> str:
         """
-        Type 1 씬의 비디오 생성 구조 반환
-        Type 1은 텍스트와 이미지를 사용한 비디오 구조를 생성
+        Type 1 씬의 비디오 파일 생성
+        기본 구현을 사용 (1080x1920, 가운데 텍스트)
         
         Returns:
-            dict: 비디오 생성에 필요한 구조 데이터
+            str: 생성된 비디오 파일 경로 또는 None
         """
-        return {
-            "type": "type1",
-            "text": self.get_field("text", ""),
-            "text2": self.get_field("text2", ""),
-            "image": self.get_field("image", None),
-            "scene_id": self.scene_id
-        }
+        # 기본 구현 사용 (부모 클래스의 메서드 호출)
+        return super().generate_video_structure()
 

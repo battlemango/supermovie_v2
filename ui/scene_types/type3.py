@@ -59,18 +59,14 @@ class Type3Scene(BaseSceneType):
         
         st.divider()
     
-    def generate_video_structure(self) -> Dict[str, Any]:
+    def generate_video_structure(self) -> str:
         """
-        Type 3 씬의 비디오 생성 구조 반환
-        Type 3는 탭과 고급 설정을 사용한 비디오 구조를 생성
+        Type 3 씬의 비디오 파일 생성
+        기본 구현을 사용 (1080x1920, 가운데 텍스트)
         
         Returns:
-            dict: 비디오 생성에 필요한 구조 데이터
+            str: 생성된 비디오 파일 경로 또는 None
         """
-        return {
-            "type": "type3",
-            "text": self.get_field("text", ""),
-            "scene_id": self.scene_id
-            # Type 3 전용 필드들을 여기에 추가
-        }
+        # 기본 구현 사용 (부모 클래스의 메서드 호출)
+        return super().generate_video_structure()
 
