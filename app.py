@@ -5,6 +5,12 @@ from ui.popup.project_create_popup import create_dialog
 from ui.popup.project_load_popup import load_dialog
 
 
+def is_debug_mode() -> bool:
+    return st.session_state.get('debug_mode', False)
+
+def set_debug_mode(enabled: bool):
+    st.session_state.debug_mode = enabled
+
 # 페이지 설정
 st.set_page_config(
     page_title="간단한 Streamlit 앱",
@@ -15,6 +21,9 @@ st.set_page_config(
 # 세션 상태 초기화
 if 'current_page' not in st.session_state:
     st.session_state.current_page = 'page1'
+
+if 'debug_mode' not in st.session_state:
+    st.session_state.debug_mode = False
 
 # 사이드바
 st.sidebar.header("🎬 Streamlit 앱")
@@ -28,24 +37,30 @@ if current_project:
 col1, col2 = st.sidebar.columns(2)
 
 with col1:
-    if st.button("📝 Create", use_container_width=True):
+    if st.button("📝 Create", width="stretch"):
         create_dialog()
 
 with col2:
-    if st.button("📁 Load", use_container_width=True):
+    if st.button("📁 Load", width="stretch"):
         load_dialog()
+
+# Debug toggle 버튼
+debug_enabled = st.sidebar.toggle("🐛 Debug Mode", key="debug_toggle", value=st.session_state.debug_mode)
+# 토글 상태가 변경되면 세션 상태 업데이트
+if debug_enabled != st.session_state.debug_mode:
+    set_debug_mode(debug_enabled)
 
 # 구분선
 st.sidebar.divider()
 
 
-if st.sidebar.button("페이지 1", use_container_width=True, key="page1_btn"):
+if st.sidebar.button("페이지 1", width="stretch", key="page1_btn"):
     st.session_state.current_page = 'page1'
 
-if st.sidebar.button("페이지 2", use_container_width=True, key="page2_btn"):
+if st.sidebar.button("페이지 2", width="stretch", key="page2_btn"):
     st.session_state.current_page = 'page2'
 
-if st.sidebar.button("페이지 3", use_container_width=True, key="page3_btn"):
+if st.sidebar.button("페이지 3", width="stretch", key="page3_btn"):
     st.session_state.current_page = 'page3'
 
 

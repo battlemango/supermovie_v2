@@ -12,13 +12,13 @@ def create_dialog():
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("취소", use_container_width=True):
+        if st.button("취소", width="stretch"):
             # 다이얼로그 ID 변경으로 새로운 입력 필드 생성
             st.session_state.dialog_id = st.session_state.get('dialog_id', 0) + 1
             st.rerun()
     
     with col2:
-        if st.button("생성", type="primary", use_container_width=True):
+        if st.button("생성", type="primary", width="stretch"):
             if name and name.strip():
                 result = project_manager.create_project(name.strip())
                 

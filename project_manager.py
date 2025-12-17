@@ -1,6 +1,7 @@
 import os
 import datetime
 from pathlib import Path
+import streamlit as st
 from service.video_manager import video_manager
 
 
@@ -237,6 +238,90 @@ class ProjectManager:
         
         return project_path / relative_path
     
+    def save_audio_file(self, uploaded_file, filename: str, subfolder: str = "audio") -> str:
+        """
+        업로드된 오디오 파일을 프로젝트 폴더에 저장
+
+        Args:
+            uploaded_file: 업로드된 파일 객체 (Streamlit의 UploadedFile)
+            filename (str): 저장할 파일명
+            subfolder (str): 저장할 하위 폴더명 (기본값: "audio")
+
+        Returns:
+            str: 저장된 파일의 상대 경로 (예: "audio/filename.mp3") 또는 None (실패 시)
+        """
+        project_path = self.get_project_path()
+        if not project_path:
+            return None
+
+        try:
+            # 하위 폴더 생성
+            target_folder = project_path / subfolder
+            target_folder.mkdir(exist_ok=True)
+
+            # 파일 경로
+            file_path = target_folder / filename
+
+            # 파일 저장
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+
+            # 상대 경로 반환
+            relative_path = f"{subfolder}/{filename}"
+            return relative_path
+        except Exception as e:
+            print(f"오디오 저장 오류: {e}")
+            return None
+    
+    def get_audio_path(self, relative_path: str) -> Path:
+        """
+        상대 경로를 기반으로 오디오 파일의 전체 경로 반환
+
+        Args:
+            relative_path (str): 상대 경로 (예: "audio/filename.mp3")
+
+        Returns:
+            Path: 전체 경로 또는 None
+        """
+        project_path = self.get_project_path()
+        if not project_path:
+            return None
+
+        return project_path / relative_path
+
+    def get_output_path(self, scene_id: str) -> tuple:
+        """
+        scene_id를 받아서 output 폴더 경로와 파일 경로를 반환
+        
+        Args:
+            scene_id (str): 씬 ID
+            
+        Returns:
+            tuple: (output_folder_path, output_file_path, relative_path) 또는 (None, None, None)
+        """
+        project_path = self.get_project_path()
+        if not project_path:
+            print("프로젝트가 로드되지 않았습니다.")
+            return None, None, None
+        
+        try:
+            # output 폴더 경로
+            output_folder = project_path / "output"
+            output_folder.mkdir(parents=True, exist_ok=True)
+            
+            # 비디오 파일 경로 (sceneid_output.mp4)
+            output_filename = f"{scene_id}_output.mp4"
+            output_file_path = output_folder / output_filename
+            
+            # 상대 경로 (output/sceneid_output.mp4)
+            relative_path = f"output/{output_filename}"
+            
+            return output_folder, output_file_path, relative_path
+            
+        except Exception as e:
+            print(f"output 경로 생성 중 오류 발생: {e}")
+            return None, None, None
+    
     def delete_project(self, folder_name):
         """프로젝트 삭제"""
         try:
@@ -258,6 +343,16 @@ class ProjectManager:
                 "success": False,
                 "message": f"삭제 실패: {str(e)}"
             }
+    
+    def get_fps(self):
+        debug_mode = st.session_state.get('debug_mode', False)
+        if debug_mode:
+            return 2
+        return 24
+    
+    def get_screen_size(self):
+        return (1080,1920)
+
 
 # 전역 프로젝트 매니저 인스턴스
 project_manager = ProjectManager()

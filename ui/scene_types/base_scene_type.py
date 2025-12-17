@@ -18,6 +18,8 @@ class BaseSceneType(ABC):
         self.scene = scene
         self.scene_id = scene.get('id')
         self.scene_type = scene.get('type', 'type1')
+        self.fps = project_manager.get_fps()
+        self.screen_size = project_manager.get_screen_size()
     
     @abstractmethod
     def render(self):
@@ -36,19 +38,10 @@ class BaseSceneType(ABC):
             str: 생성된 비디오 파일 경로 또는 None (실패 시)
         """
         try:
-            # 프로젝트 경로 가져오기
-            project_path = project_manager.get_project_path()
-            if not project_path:
-                print("프로젝트가 로드되지 않았습니다.")
+            # project_manager를 통해 output 경로 가져오기
+            output_folder, output_path, relative_path = project_manager.get_output_path(self.scene_id)
+            if not output_path:
                 return None
-            
-            # output 폴더 경로
-            output_folder = project_path / "output"
-            output_folder.mkdir(parents=True, exist_ok=True)
-            
-            # 비디오 파일 경로 (sceneid_output.mp4)
-            output_filename = f"{self.scene_id}_output.mp4"
-            output_path = output_folder / output_filename
             
             # 1080x1920 크기의 텍스트 클립 생성 (가운데 정렬)
             # MoviePy 2.x에서는 ColorClip을 사용하여 배경을 만들고 텍스트를 합성
@@ -79,8 +72,7 @@ class BaseSceneType(ABC):
             txt_clip.close()
             bg_clip.close()
             
-            # 상대 경로 반환 (output/sceneid_output.mp4)
-            relative_path = f"output/{output_filename}"
+            # 상대 경로 반환
             return relative_path
             
         except Exception as e:
@@ -99,4 +91,3 @@ class BaseSceneType(ABC):
             필드 값 또는 default
         """
         return self.scene.get(field, default)
-

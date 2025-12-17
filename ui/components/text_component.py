@@ -3,7 +3,7 @@ from typing import Dict, Any
 from service.video_manager import video_manager
 
 
-def render_text_input(scene: Dict[str, Any], field: str, height: int = 100, label: str = None):
+def render_text_input(scene: Dict[str, Any], field: str, height: int = 50, label: str = None):
     """
     텍스트 입력 컴포넌트 - 여러 타입에서 공용으로 사용 가능
     

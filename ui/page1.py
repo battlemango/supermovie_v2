@@ -1,59 +1,18 @@
 import streamlit as st
 from service.video_manager import video_manager
-
-@st.dialog("씬 타입 선택")
-def scene_type_dialog():
-    """씬 타입을 선택하는 팝업 다이얼로그"""
-    st.write("씬의 타입을 선택하세요")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        if st.button("Type 1", use_container_width=True, type="primary"):
-            # type1으로 씬 추가
-            new_scene = video_manager.add_scene(scene_type="type1")
-            if new_scene:
-                st.success(f"씬이 추가되었습니다! (Type: type1)")
-                st.rerun()
-            else:
-                st.error("프로젝트를 먼저 로드해주세요.")
-    
-    with col2:
-        if st.button("Type 2", use_container_width=True, type="primary"):
-            # type2로 씬 추가
-            new_scene = video_manager.add_scene(scene_type="type2")
-            if new_scene:
-                st.success(f"씬이 추가되었습니다! (Type: type2)")
-                st.rerun()
-            else:
-                st.error("프로젝트를 먼저 로드해주세요.")
-    
-    with col3:
-        if st.button("Type 3", use_container_width=True, type="primary"):
-            # type3으로 씬 추가
-            new_scene = video_manager.add_scene(scene_type="type3")
-            if new_scene:
-                st.success(f"씬이 추가되었습니다! (Type: type3)")
-                st.rerun()
-            else:
-                st.error("프로젝트를 먼저 로드해주세요.")
-    
-    # 닫기 버튼
-    st.divider()
-    if st.button("취소", use_container_width=True):
-        st.rerun()
+from ui.popup.scene_type_dialog import scene_type_dialog
 
 def show():
     
     # + 버튼과 비디오 생성 버튼
     col1, col2, col3 = st.columns([1, 1, 3])
     with col1:
-        if st.button("➕", use_container_width=True, help="새 씬 추가"):
+        if st.button("➕", width="stretch", help="새 씬 추가"):
             # 팝업 다이얼로그 열기
             scene_type_dialog()
     
     with col2:
-        if st.button("🎬", use_container_width=True, help="비디오 생성"):
+        if st.button("🎬", width="stretch", help="비디오 생성"):
             # 비디오 생성 처리
             video_data = video_manager.get_video_data()
             scenes = video_data.get("scenes", [])
@@ -87,7 +46,7 @@ def show():
                 
                 def show_success(message: str):
                     """성공 메시지 콜백"""
-                    st.success(message)
+                    # st.success(message)
                     status_text.text("완료!")
                 
                 # 최종 비디오 생성
@@ -134,9 +93,7 @@ def show():
                         scene_instance = SceneClass(scene)
                         video_path = scene_instance.generate_video_structure()
                         
-                        if video_path:
-                            st.success(f"비디오 생성 완료: {video_path}")
-                        else:
+                        if not video_path:
                             st.error("비디오 생성에 실패했습니다.")
                     else:
                         st.warning(f"알 수 없는 씬 타입: {scene_type}")
@@ -165,4 +122,3 @@ def show():
                 st.divider()
     else:
         st.info("추가된 씬이 없습니다. + 버튼을 눌러 씬을 추가하세요.")
-    

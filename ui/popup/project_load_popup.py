@@ -10,7 +10,7 @@ def load_dialog():
     
     if not projects:
         st.warning("생성된 프로젝트가 없습니다.")
-        if st.button("닫기", use_container_width=True):
+        if st.button("닫기", width="stretch"):
             st.rerun()
         return
     
@@ -41,7 +41,7 @@ def load_dialog():
             emoji = "📁 "
         
         # 프로젝트 선택 버튼
-        if st.button(f"{emoji}{display_name}", key=f"select_{project['folder_name']}", use_container_width=True, type=button_type):
+        if st.button(f"{emoji}{display_name}", key=f"select_{project['folder_name']}", width="stretch", type=button_type):
             # 현재 프로젝트 업데이트 (Project 객체 전달)
             project_manager.load_project(project)
             st.success(f"✅ '{project['project_name']}' 프로젝트를 로드했습니다.")
@@ -49,5 +49,5 @@ def load_dialog():
     
     # 닫기 버튼
     st.divider()
-    if st.button("닫기", use_container_width=True):
+    if st.button("닫기", width="stretch"):
         st.rerun()

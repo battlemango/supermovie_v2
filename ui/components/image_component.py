@@ -69,8 +69,7 @@ def render_image_input(scene: Dict[str, Any], field: str = "image"):
                     image = Image.open(full_image_path)
                     st.image(
                         image,
-                        width=None,
-                        use_container_width=False
+                        width='content',
                     )
                     # CSS로 이미지 높이만 제한 (원본 이미지는 리사이즈하지 않음, 비율 유지)
                     st.markdown(
