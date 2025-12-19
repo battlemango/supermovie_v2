@@ -22,7 +22,7 @@ class BalanceChristmasMain(BaseSceneType):
     def render(self):
         """Type 1 씬의 UI를 렌더링"""
         # 텍스트 입력 컴포넌트 사용
-        render_text_input(self.scene, "title", label="title", multiline=False)
+        render_text_input(self.scene, "title", label="title", multiline=True)
         col1, col2 = st.columns([1, 1])
         with col1:
             render_text_input(self.scene, "choice_a", label="A", multiline=False)
@@ -50,7 +50,7 @@ class BalanceChristmasMain(BaseSceneType):
         b_audio_clip = self.gen_audio_clip("b_audio", a_audio_clip.end)
 
         
-        max_duration = round(b_audio_clip.end + 1, 1)
+        max_duration = round(b_audio_clip.end + 0.3, 1)
         print("max_duration : {max_duration}")
     
        
@@ -58,7 +58,7 @@ class BalanceChristmasMain(BaseSceneType):
         self.clips.append(base_clip)
 
         
-        bg_clip = self.gen_image_clip(path="assets/balance/christmas_bal_problem_bg.png",
+        bg_clip = self.gen_image_clip(path="assets/balance/balance_bg.png",
                                        duration=max_duration, resized_width=1080, resized_height=1080, 
                                        position=("center", y_variabtion))
        
@@ -72,11 +72,11 @@ class BalanceChristmasMain(BaseSceneType):
 
        
         
-        title_text_clip = self.gen_text_clip(field="title", font=FontUtils.MAPLESTORY_BOLD,start=0,duration=max_duration, position=("center", 200-960+y_variabtion))
-        a_text_clip = self.gen_text_clip(field="choice_a", font=FontUtils.MAPLESTORY_LIGHT,start=a_audio_clip.start,duration=max_duration,
-                                         size=(540, 1920), position=(0, 800-960+y_variabtion))
-        b_text_clip = self.gen_text_clip(field="choice_b", font=FontUtils.MAPLESTORY_LIGHT,start=b_audio_clip.start,duration=max_duration,
-                                         size=(540, 1920), position=(540, 800-960+y_variabtion))
+        title_text_clip = self.gen_text_clip(field="title", color='black',font=FontUtils.MAPLESTORY_BOLD,start=0,duration=max_duration, size=(880, 1920),position=("center", 220-960+y_variabtion))
+        a_text_clip = self.gen_text_clip(field="choice_a", font=FontUtils.MAPLESTORY_LIGHT,font_size=70,start=a_audio_clip.start,duration=max_duration,
+                                         size=(480, 1920), position=(0, 800-960+y_variabtion), margin=(30,0))
+        b_text_clip = self.gen_text_clip(field="choice_b", font=FontUtils.MAPLESTORY_LIGHT,font_size=70,start=b_audio_clip.start,duration=max_duration,
+                                         size=(480, 1920), position=(540, 800-960+y_variabtion), margin=(30,0))
         
                     
         

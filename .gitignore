@@ -163,3 +163,4 @@ cython_debug/
 pokemon_images/
 myenv/
 projects/
+tts_outputs/

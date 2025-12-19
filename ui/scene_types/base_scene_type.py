@@ -122,7 +122,7 @@ class BaseSceneType(ABC):
 
         return None
     
-    def gen_text_clip(self, text=None, field=None, font=FontUtils.MAPLESTORY_LIGHT,font_size=80,color='white',method='caption',size=(1080,1920),start=0, end= -1, duration= 1, position=("center", "center")):
+    def gen_text_clip(self, text=None, field=None, font=FontUtils.MAPLESTORY_LIGHT,font_size=80,color='white',method='caption',margin=(0,0),size=(1080,1920),start=0, end= -1, duration= 1, position=("center", "center")):
         if not text:
             text = self.scene.get(field, None)
         if not text:
@@ -134,6 +134,7 @@ class BaseSceneType(ABC):
                 font_size=font_size,
                 color=color,
                 method=method,
+                margin=margin,
                 size=size,
                 text_align="center"
             )
