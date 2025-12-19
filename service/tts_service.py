@@ -57,6 +57,25 @@ class TTSRequest:
             voice_id="8jHHF8rMqMlg8if2mOUe",  # 기본 음성
             model_id="eleven_multilingual_v2"
         )
+    
+    @classmethod
+    def han(cls, text: str, output_path: Optional[str] = None) -> 'TTSRequest':
+        """
+        한(han) 음성 프리셋으로 TTSRequest 생성
+        
+        Args:
+            text (str): 음성으로 변환할 텍스트
+            output_path (str, optional): 저장할 오디오 파일 경로 (None이면 자동 생성)
+        
+        Returns:
+            TTSRequest: 한(han) 음성 설정이 포함된 요청 객체
+        """
+        return cls(
+            text=text,
+            output_path=output_path,
+            voice_id="8jHHF8rMqMlg8if2mOUe",  # 한(han) 음성
+            model_id="eleven_multilingual_v2"
+        )
 
 
 class TTSService:

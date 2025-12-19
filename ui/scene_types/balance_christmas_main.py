@@ -38,21 +38,26 @@ class BalanceChristmasMain(BaseSceneType):
         
         col1, col2, col3 = st.columns([1, 1,1])
         with col1:
-            # title이 없으면 None, 있으면 TTSRequest 생성 (output_path는 자동 생성)
+            # title이 없으면 None, 있으면 TTSRequest 생성 (han 프리셋 사용)
             title_text = self.scene.get("title")
             tts_request = None
             if title_text:
-                tts_request = TTSRequest(
-                    text=title_text, 
-                    voice_id="21m00Tcm4TlvDq8ikWAM", 
-                    model_id="eleven_multilingual_v2"
-                    # output_path는 None이면 자동으로 tts_outputs에 저장됨
-                )
+                tts_request = TTSRequest.han(text=title_text)
             render_audio_input(self.scene, "title_audio", tts_request)
         with col2:
-            render_audio_input(self.scene, "a_audio")
+            # choice_a 텍스트로 TTSRequest 생성 (han 프리셋 사용)
+            choice_a_text = self.scene.get("choice_a")
+            a_tts_request = None
+            if choice_a_text:
+                a_tts_request = TTSRequest.han(text=choice_a_text)
+            render_audio_input(self.scene, "a_audio", a_tts_request)
         with col3:
-            render_audio_input(self.scene, "b_audio")      
+            # choice_b 텍스트로 TTSRequest 생성 (han 프리셋 사용)
+            choice_b_text = self.scene.get("choice_b")
+            b_tts_request = None
+            if choice_b_text:
+                b_tts_request = TTSRequest.han(text=choice_b_text)
+            render_audio_input(self.scene, "b_audio", b_tts_request)      
              
 
     def generate_video_structure(self) -> str:

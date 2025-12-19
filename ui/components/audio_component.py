@@ -8,6 +8,73 @@ from service.tts_service import TTSRequest, tts_service
 
 subfolder = "audio"
 
+
+def _save_audio_to_project(
+    scene_id: str,
+    field: str,
+    source_file: Any,
+    file_extension: str = None
+) -> bool:
+    """
+    오디오 파일을 프로젝트의 audio 폴더에 저장하고 scene field에 경로를 저장하는 공통 함수
+    
+    Args:
+        scene_id (str): 씬 ID
+        field (str): 필드명
+        source_file (Path): 저장할 소스 파일 경로 (Path 객체 또는 UploadedFile)
+        file_extension (str, optional): 파일 확장자 (없으면 source_file에서 추출)
+    
+    Returns:
+        bool: 성공 여부
+    """
+    try:
+        # 프로젝트 경로 가져오기
+        project_path = project_manager.get_project_path()
+        if not project_path:
+            st.error("프로젝트가 로드되지 않았습니다.")
+            return False
+        
+        # audio 폴더 경로
+        audio_folder = project_path / subfolder
+        audio_folder.mkdir(parents=True, exist_ok=True)
+        
+        # 파일 확장자 추출
+        if file_extension is None:
+            if isinstance(source_file, Path):
+                file_extension = source_file.suffix
+            else:
+                # UploadedFile인 경우
+                file_extension = Path(source_file.name).suffix
+        
+        # 파일명 생성 (scene_id와 field를 포함)
+        audio_filename = f"{scene_id}_{field}{file_extension}"
+        target_path = audio_folder / audio_filename
+        
+        # 파일 저장/복사
+        if isinstance(source_file, Path):
+            # Path 객체인 경우 (TTS 생성 파일)
+            shutil.copy2(source_file, target_path)
+        else:
+            # UploadedFile인 경우
+            with open(target_path, "wb") as f:
+                f.write(source_file.getbuffer())
+        
+        # 상대 경로 생성
+        relative_path = f"{subfolder}/{audio_filename}"
+        
+        # scene field에 경로 저장
+        if video_manager.update_scene_field(scene_id, field, relative_path):
+            return True
+        else:
+            st.error("오디오 경로 저장에 실패했습니다.")
+            return False
+            
+    except Exception as e:
+        st.error(f"오디오 저장 중 오류가 발생했습니다: {e}")
+        print(f"[AUDIO] 저장 오류: {e}")
+        return False
+
+
 def render_audio_input(scene: Dict[str, Any], field: str = "audio", tts_request: Optional[TTSRequest] = None):
     """
     오디오 업로드 및 재생 컴포넌트
@@ -36,32 +103,10 @@ def render_audio_input(scene: Dict[str, Any], field: str = "audio", tts_request:
                     generated_file = tts_service.generate(tts_request)
                     
                     if generated_file and generated_file.exists():
-                        # 프로젝트 경로 가져오기
-                        project_path = project_manager.get_project_path()
-                        if project_path:
-                            # audio 폴더 경로
-                            audio_folder = project_path / subfolder
-                            audio_folder.mkdir(parents=True, exist_ok=True)
-                            
-                            # 파일명 생성 (scene_id와 field를 포함)
-                            file_extension = generated_file.suffix
-                            audio_filename = f"{scene_id}_{field}{file_extension}"
-                            target_path = audio_folder / audio_filename
-                            
-                            # 생성된 파일을 프로젝트의 audio 폴더로 복사
-                            shutil.copy2(generated_file, target_path)
-                            
-                            # 상대 경로 생성
-                            relative_path = f"{subfolder}/{audio_filename}"
-                            
-                            # scene field에 경로 저장
-                            if video_manager.update_scene_field(scene_id, field, relative_path):
-                                st.success("TTS로 오디오가 생성되었습니다!")
-                                st.rerun()
-                            else:
-                                st.error("오디오 경로 저장에 실패했습니다.")
-                        else:
-                            st.error("프로젝트가 로드되지 않았습니다.")
+                        # 공통 함수를 사용하여 프로젝트에 저장
+                        if _save_audio_to_project(scene_id, field, generated_file):
+                            st.success("TTS로 오디오가 생성되었습니다!")
+                            st.rerun()
                     else:
                         st.error("TTS 생성에 실패했습니다.")
                         
@@ -73,21 +118,8 @@ def render_audio_input(scene: Dict[str, Any], field: str = "audio", tts_request:
         """파일 업로드 시 1회 실행 -> 저장 -> scene field에 경로 저장"""
         if uploader_key in st.session_state and st.session_state[uploader_key] is not None:
             uploaded_file = st.session_state[uploader_key]
-            try:
-                file_extension = Path(uploaded_file.name).suffix
-                audio_filename = f"{scene_id}_{field}{file_extension}"
-
-                relative_path = project_manager.save_audio_file(
-                    uploaded_file,
-                    audio_filename,
-                    subfolder
-                )
-
-                if relative_path:
-                    video_manager.update_scene_field(scene_id, field, relative_path)
-
-            except Exception as e:
-                st.error(f"오디오 저장 중 오류가 발생했습니다: {e}")
+            # 공통 함수를 사용하여 프로젝트에 저장
+            _save_audio_to_project(scene_id, field, uploaded_file)
 
     saved_audio_path = video_manager.get_scene_field(scene_id, field, None)
 
