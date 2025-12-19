@@ -1,11 +1,15 @@
 import streamlit as st
+from pathlib import Path
 from service.video_manager import video_manager
 from ui.popup.scene_type_dialog import scene_type_dialog
+from ui.popup.video_player_popup import video_player_dialog
+from project_manager import project_manager
+from utils.folder_utils import open_folder_in_explorer
 
 def show():
     
-    # + 버튼과 비디오 생성 버튼
-    col1, col2, col3 = st.columns([1, 1, 3])
+    # + 버튼과 비디오 생성 버튼, output 폴더 열기 버튼
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 2])
     with col1:
         if st.button("➕", width="stretch", help="새 씬 추가"):
             # 팝업 다이얼로그 열기
@@ -64,6 +68,22 @@ def show():
                 if not final_path:
                     status_text.empty()
     
+    with col3:
+        # output 폴더 열기 버튼
+        if st.button("📁", width="stretch", help="output 폴더 열기"):
+            # 프로젝트 경로 가져오기
+            project_path = project_manager.get_project_path()
+            if project_path:
+                # output 폴더 경로
+                output_folder = project_path / "output"
+                
+                # utils의 폴더 열기 함수 사용
+                success = open_folder_in_explorer(output_folder, bring_to_front=True)
+                if not success:
+                    st.error("폴더 열기에 실패했습니다.")
+            else:
+                st.warning("프로젝트가 로드되지 않았습니다.")
+    
     # 현재 씬 목록 표시
     video_data = video_manager.get_video_data()
     scenes = video_data.get("scenes", [])
@@ -76,9 +96,12 @@ def show():
             scene_type = scene.get('type', 'type1')
             scene_id = scene.get('id')
             
-            # 씬 헤더와 삭제 버튼, 비디오 생성 버튼을 나란히 배치
-            col_header, col_video, col_delete = st.columns([8, 1, 1
-            ])
+            # 비디오 파일 존재 여부 확인
+            output_folder, output_path, relative_path = project_manager.get_output_path(scene_id)
+            video_exists = output_path and output_path.exists()
+            
+            # 씬 헤더와 비디오 생성 버튼, 재생 버튼, 삭제 버튼을 나란히 배치
+            col_header, col_video, col_play, col_delete = st.columns([6, 1, 1, 1])
             
             with col_header:
                 # 씬 헤더 표시
@@ -95,8 +118,19 @@ def show():
                         
                         if not video_path:
                             st.error("비디오 생성에 실패했습니다.")
+                        else:
+                            # 비디오 생성 후 페이지 새로고침하여 재생 버튼 표시
+                            st.rerun()
                     else:
                         st.warning(f"알 수 없는 씬 타입: {scene_type}")
+            
+            with col_play:
+                # 비디오 파일이 있으면 재생 버튼 표시
+                if video_exists:
+                    if st.button("▶️", key=f"play_btn_{scene_id}", help="비디오 재생"):
+                        # 비디오 재생 팝업 열기
+                        scene_title = f"씬 {idx} (Type: {scene_type})"
+                        video_player_dialog(output_path, scene_title)
             
             with col_delete:
                 # 삭제 버튼 (X 표시)
