@@ -14,7 +14,7 @@ from moviepy import ColorClip, CompositeVideoClip, ImageClip
 
 y_variabtion = 300
 
-class BalanceChristmasMain(BaseSceneType):
+class BalanceChristmasExit(BaseSceneType):
     """Type 1 씬 타입 클래스"""
     def __init__(self, scene: Dict[str, Any]):
         super().__init__(scene)
@@ -22,26 +22,18 @@ class BalanceChristmasMain(BaseSceneType):
     def render(self):
         """Type 1 씬의 UI를 렌더링"""
         # 텍스트 입력 컴포넌트 사용
-        render_text_input(self.scene, "title", label="title", multiline=False)
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            render_text_input(self.scene, "choice_a", label="A", multiline=False)
-        with col2:
-            render_text_input(self.scene, "choice_b", label="B", multiline=False)
+        render_text_input(self.scene, "title", label="title")
+        render_text_input(self.scene, "choice_a", label="A")
+        render_text_input(self.scene, "choice_b", label="B")
 
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            render_image_input(self.scene, "a_image")
-        with col2:
-            render_image_input(self.scene, "b_image")
-        
-        col1, col2, col3 = st.columns([1, 1,1])
-        with col1:
-            render_audio_input(self.scene, "title_audio")
-        with col2:
-            render_audio_input(self.scene, "a_audio")
-        with col3:
-            render_audio_input(self.scene, "b_audio")      
+        # 이미지 입력 컴포넌트 사용
+        render_image_input(self.scene, "a_image")
+        render_image_input(self.scene, "b_image")
+
+        render_audio_input(self.scene, "title_audio")
+        render_audio_input(self.scene, "a_audio")
+        render_audio_input(self.scene, "b_audio")
+ 
              
 
     def generate_video_structure(self) -> str:

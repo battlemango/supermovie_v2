@@ -3,6 +3,7 @@ import datetime
 from pathlib import Path
 import streamlit as st
 from service.video_manager import video_manager
+from settings import Settings
 
 
 class Project:
@@ -62,12 +63,38 @@ class ProjectManager:
         self.base_dir = Path(base_dir)
         self.current_project = None  # 현재 선택된 프로젝트 정보 저장
         self.ensure_projects_directory()
+        self._load_last_project()
 
     def load_project(self, project):
         self.current_project = project
         video_manager.on_project_loaded(self.current_project)
+        # 마지막 프로젝트 정보 저장
+        Settings.set_last_project(project)
 
     
+    def _load_last_project(self):
+        """설정에서 마지막 프로젝트를 로드합니다."""
+        try:
+            last_project_data = Settings.get_last_project()
+            if last_project_data:
+                # 딕셔너리 데이터를 Project 객체로 변환
+                if isinstance(last_project_data, dict):
+                    project = Project(
+                        project_name=last_project_data.get("project_name", ""),
+                        folder_name=last_project_data.get("folder_name", ""),
+                        path=last_project_data.get("path", ""),
+                        timestamp=last_project_data.get("timestamp", "")
+                    )
+                    # 프로젝트 폴더가 실제로 존재하는지 확인
+                    if project.path.exists():
+                        self.load_project(project)
+                        print(f"마지막 프로젝트를 로드했습니다: {project.project_name}")
+                    else:
+                        print(f"마지막 프로젝트 폴더를 찾을 수 없습니다: {project.path}")
+                        Settings.set_last_project(None)  # 존재하지 않는 프로젝트는 설정에서 제거
+        except Exception as e:
+            print(f"마지막 프로젝트 로드 중 오류 발생: {e}")
+
     def ensure_projects_directory(self):
         """projects 디렉토리가 없으면 생성"""
         if not self.base_dir.exists():
@@ -273,7 +300,7 @@ class ProjectManager:
             print(f"오디오 저장 오류: {e}")
             return None
     
-    def get_audio_path(self, relative_path: str) -> Path:
+    def get_relative_path(self, relative_path: str) -> Path:
         """
         상대 경로를 기반으로 오디오 파일의 전체 경로 반환
 
@@ -345,7 +372,7 @@ class ProjectManager:
             }
     
     def get_fps(self):
-        debug_mode = st.session_state.get('debug_mode', False)
+        debug_mode = Settings.is_debug_mode()
         if debug_mode:
             return 2
         return 24

@@ -1,15 +1,9 @@
 import streamlit as st
 from project_manager import project_manager
+from settings import Settings
 from ui import page1, page2, page3
 from ui.popup.project_create_popup import create_dialog
 from ui.popup.project_load_popup import load_dialog
-
-
-def is_debug_mode() -> bool:
-    return st.session_state.get('debug_mode', False)
-
-def set_debug_mode(enabled: bool):
-    st.session_state.debug_mode = enabled
 
 # 페이지 설정
 st.set_page_config(
@@ -22,8 +16,9 @@ st.set_page_config(
 if 'current_page' not in st.session_state:
     st.session_state.current_page = 'page1'
 
+# Settings에서 debug_mode 값을 가져와서 세션 상태 초기화
 if 'debug_mode' not in st.session_state:
-    st.session_state.debug_mode = False
+    st.session_state.debug_mode = Settings.is_debug_mode()
 
 # 사이드바
 st.sidebar.header("🎬 Streamlit 앱")
@@ -46,9 +41,10 @@ with col2:
 
 # Debug toggle 버튼
 debug_enabled = st.sidebar.toggle("🐛 Debug Mode", key="debug_toggle", value=st.session_state.debug_mode)
-# 토글 상태가 변경되면 세션 상태 업데이트
+# 토글 상태가 변경되면 세션 상태와 Settings 업데이트
 if debug_enabled != st.session_state.debug_mode:
-    set_debug_mode(debug_enabled)
+    st.session_state.debug_mode = debug_enabled
+    Settings.set_debug_mode(debug_enabled)
 
 # 구분선
 st.sidebar.divider()

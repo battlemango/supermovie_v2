@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 from pathlib import Path
-from moviepy import TextClip
+from moviepy import AudioFileClip, CompositeAudioClip, CompositeVideoClip, ImageClip, TextClip
 from project_manager import project_manager
+from utils import FontUtils
 
 
 class BaseSceneType(ABC):
@@ -20,6 +21,9 @@ class BaseSceneType(ABC):
         self.scene_type = scene.get('type', 'type1')
         self.fps = project_manager.get_fps()
         self.screen_size = project_manager.get_screen_size()
+
+        self.clips = []
+        self.audio_clips = []
     
     @abstractmethod
     def render(self):
@@ -29,55 +33,9 @@ class BaseSceneType(ABC):
         """
         pass
     
+    @abstractmethod
     def generate_video_structure(self) -> Optional[str]:
-        """
-        비디오 파일을 생성하고 경로를 반환하는 메서드
-        기본 구현: 1080x1920 크기의 가운데 정렬 텍스트 비디오 생성
-        
-        Returns:
-            str: 생성된 비디오 파일 경로 또는 None (실패 시)
-        """
-        try:
-            # project_manager를 통해 output 경로 가져오기
-            output_folder, output_path, relative_path = project_manager.get_output_path(self.scene_id)
-            if not output_path:
-                return None
-            
-            # 1080x1920 크기의 텍스트 클립 생성 (가운데 정렬)
-            # MoviePy 2.x에서는 ColorClip을 사용하여 배경을 만들고 텍스트를 합성
-            from moviepy import ColorClip, CompositeVideoClip
-            
-            # 배경 클립 생성 (1080x1920, 검은색)
-            bg_clip = ColorClip(size=(1080, 1920), color=(0, 0, 0), duration=3)
-            
-            # 텍스트 클립 생성 (가운데 정렬을 위해 horizontal_align, vertical_align 사용)
-            txt_clip = TextClip(
-                text="abc",
-                font_size=100,
-                color='white',
-                duration=3,
-                size=(1080, 1920),
-                horizontal_align='center',
-                vertical_align='center'
-            )
-            
-            # 배경과 텍스트 합성
-            final_clip = CompositeVideoClip([bg_clip, txt_clip], size=(1080, 1920))
-            
-            # 비디오 저장
-            final_clip.write_videofile(str(output_path), fps=24)
-            
-            # 리소스 정리
-            final_clip.close()
-            txt_clip.close()
-            bg_clip.close()
-            
-            # 상대 경로 반환
-            return relative_path
-            
-        except Exception as e:
-            print(f"비디오 생성 중 오류 발생: {e}")
-            return None
+        pass
     
     def get_field(self, field: str, default=None):
         """
@@ -91,3 +49,98 @@ class BaseSceneType(ABC):
             필드 값 또는 default
         """
         return self.scene.get(field, default)
+
+
+    def generate_video(self, max_duration) -> str:
+        try:
+            # project_manager를 통해 output 경로 가져오기
+            output_folder, output_path, relative_path = project_manager.get_output_path(self.scene_id)
+            if not output_path:
+                return None            
+            # 모든 클립을 연결하여 최종 비디오 생성
+            if self.clips:
+                final_audio = CompositeAudioClip(self.audio_clips)
+                final_clip = CompositeVideoClip(self.clips).with_audio(final_audio)
+            
+            final_clip = final_clip.with_duration(max_duration)
+            # 비디오 저장
+            final_clip.write_videofile(str(output_path), fps=self.fps)
+            
+            # 리소스 정리
+            final_clip.close()
+            for clip in self.clips:
+                clip.close()
+            
+            # 상대 경로 반환
+            return relative_path
+            
+        except Exception as e:
+            print(f"비디오 생성 중 오류 발생: {e}")
+            return None
+
+    def gen_audio_clip(self, field, start=0):
+        audio_path = self.scene.get(field, None)
+        if not audio_path:
+            return None
+        
+        full_audio_path = project_manager.get_relative_path(audio_path)
+        if full_audio_path and full_audio_path.exists():
+            audio_clip = AudioFileClip(full_audio_path).with_start(start)
+            self.audio_clips.append(audio_clip)
+            return audio_clip
+
+        return None
+    
+    def gen_image_clip(self, field=None, path=None, start=0, end= -1, duration= 1, resized_width = -1, resized_height=-1, position=("center", "center")):
+        if not path:
+            image_path = self.scene.get(field, None)
+            if not image_path:
+                return None
+            else:
+                full_path = project_manager.get_relative_path(image_path)
+        else:
+            full_path = path
+        
+        
+        if full_path:
+            
+            if end != -1:
+                clip = ImageClip(str(full_path)).with_start(start).with_position(position).with_end(end)
+            else:
+                clip = ImageClip(str(full_path), duration=duration).with_start(start).with_position(position)
+            
+            if resized_width != -1 and resized_height != -1:
+                clip = clip.resized(width=resized_width, height=resized_height)
+            elif resized_width != -1:
+                clip = clip.resized(width=resized_width)
+            elif resized_height != -1:
+                clip = clip.resized(height=resized_height)
+
+            self.clips.append(clip)
+                
+            return clip
+
+        return None
+    
+    def gen_text_clip(self, text=None, field=None, font=FontUtils.MAPLESTORY_LIGHT,font_size=80,color='white',method='caption',size=(1080,1920),start=0, end= -1, duration= 1, position=("center", "center")):
+        if not text:
+            text = self.scene.get(field, None)
+        if not text:
+            return None
+        
+        clip = TextClip(
+                font=font,
+                text=text,
+                font_size=font_size,
+                color=color,
+                method=method,
+                size=size,
+                text_align="center"
+            )
+        if end != -1:
+            clip = clip.with_start(start).with_end(end).with_position(position)
+        else:
+            clip = clip.with_start(start).with_duration(duration).with_position(position)
+
+        self.clips.append(clip)
+        return clip
