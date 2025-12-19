@@ -12,13 +12,14 @@ from typing import Optional
 class TTSRequest:
     """
     TTS 요청 구조체
-    텍스트, 출력 경로, 음성 ID, 모델 ID를 포함
+    텍스트, 출력 경로, 음성 ID, 모델 ID, 속도를 포함
     output_path가 없으면 자동으로 tts_outputs 폴더에 저장됨
     """
     text: str
     voice_id: str
     model_id: str
     output_path: Optional[str] = None  # None이면 자동으로 tts_outputs에 저장
+    speed: float = 1.1  # 음성 속도 (기본값: 1.1)
     
     @classmethod
     def rachel(cls, text: str, output_path: Optional[str] = None) -> 'TTSRequest':
@@ -136,7 +137,8 @@ class TTSService:
                     "stability": 0.5,
                     "similarity_boost": 0.75,
                     "style": 0.0,
-                    "use_speaker_boost": True
+                    "use_speaker_boost": True,
+                    "speed": request.speed
                 }
             }
             

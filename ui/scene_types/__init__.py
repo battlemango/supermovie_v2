@@ -3,6 +3,7 @@
 각 타입에 맞는 UI를 제공하는 모듈들을 포함합니다.
 """
 
+from ui.scene_types.dimango_type import DimangoType
 from ui.scene_types.type1 import Type1Scene
 from ui.scene_types.type2 import Type2Scene
 from ui.scene_types.type3 import Type3Scene
@@ -19,7 +20,8 @@ scene_classes = {
     "type3": (Type3Scene, "Type 3"),
     "balance_christmas_main": (BalanceChristmasMain, "Balance Christmas Main"),
     "balance_christmas_enter": (BalanceChristmasEnter, "Balance Christmas Enter"),
-    "balance_christmas_exit": (BalanceChristmasExit, "Balance Christmas Exit")
+    "balance_christmas_exit": (BalanceChristmasExit, "Balance Christmas Exit"),
+    "dimango_type": (DimangoType, "Dimango Type")
 }
 
 
