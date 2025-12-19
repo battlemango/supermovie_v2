@@ -69,7 +69,7 @@ def render_audio_input(scene: Dict[str, Any], field: str = "audio"):
             st.error(f"오디오를 불러오는 중 오류가 발생했습니다: {e}")
 
     with col_btn:
-        if st.button("❌", key=delete_key, help="오디오 제거"):
+        if st.button("X", key=delete_key, help="오디오 제거"):
             video_manager.update_scene_field(scene_id, field, None)
 
             # 선택: uploader state도 비워주기

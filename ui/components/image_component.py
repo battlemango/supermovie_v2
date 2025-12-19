@@ -77,7 +77,7 @@ def render_image_input(scene: Dict[str, Any], field: str = "image"):
 
     with col2:
         # ❌ 버튼(텍스트로 X)
-        if st.button("❌", key=delete_key, help="이미지 제거"):
+        if st.button("X", key=delete_key, help="이미지 제거"):
             video_manager.update_scene_field(scene_id, field, None)
 
             # 업로더가 바로 보이도록(선택)
