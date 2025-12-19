@@ -1,12 +1,14 @@
 import streamlit as st
-from typing import Dict, Any
+import shutil
+from typing import Dict, Any, Optional
 from service.video_manager import video_manager
 from project_manager import project_manager
 from pathlib import Path
+from service.tts_service import TTSRequest, tts_service
 
 subfolder = "audio"
 
-def render_audio_input(scene: Dict[str, Any], field: str = "audio"):
+def render_audio_input(scene: Dict[str, Any], field: str = "audio", tts_request: Optional[TTSRequest] = None):
     """
     오디오 업로드 및 재생 컴포넌트
     - field 값 없으면 uploader
@@ -17,9 +19,55 @@ def render_audio_input(scene: Dict[str, Any], field: str = "audio"):
 
     uploader_key = f"audio_{scene_id}_{field}"
     delete_key = f"delete_audio_{scene_id}_{field}"
+    auto_key = f"auto_{scene_id}_{field}"
 
-    # ✅ 상단 field 텍스트
-    st.text(field)
+    # ✅ 상단 field 텍스트와 auto 버튼을 나란히 배치
+    col_field, col_auto = st.columns([2, 1])
+    
+    with col_field:
+        st.text(field)
+    
+    with col_auto:
+        # tts_request가 있을 때만 auto 버튼 표시
+        if tts_request:
+            if st.button("auto", key=auto_key, help="자동 생성 (TTS)"):
+                try:
+                    # TTS 서비스 호출하여 음성 파일 생성
+                    generated_file = tts_service.generate(tts_request)
+                    
+                    if generated_file and generated_file.exists():
+                        # 프로젝트 경로 가져오기
+                        project_path = project_manager.get_project_path()
+                        if project_path:
+                            # audio 폴더 경로
+                            audio_folder = project_path / subfolder
+                            audio_folder.mkdir(parents=True, exist_ok=True)
+                            
+                            # 파일명 생성 (scene_id와 field를 포함)
+                            file_extension = generated_file.suffix
+                            audio_filename = f"{scene_id}_{field}{file_extension}"
+                            target_path = audio_folder / audio_filename
+                            
+                            # 생성된 파일을 프로젝트의 audio 폴더로 복사
+                            shutil.copy2(generated_file, target_path)
+                            
+                            # 상대 경로 생성
+                            relative_path = f"{subfolder}/{audio_filename}"
+                            
+                            # scene field에 경로 저장
+                            if video_manager.update_scene_field(scene_id, field, relative_path):
+                                st.success("TTS로 오디오가 생성되었습니다!")
+                                st.rerun()
+                            else:
+                                st.error("오디오 경로 저장에 실패했습니다.")
+                        else:
+                            st.error("프로젝트가 로드되지 않았습니다.")
+                    else:
+                        st.error("TTS 생성에 실패했습니다.")
+                        
+                except Exception as e:
+                    st.error(f"TTS 생성 중 오류가 발생했습니다: {str(e)}")
+                    print(f"[AUTO] TTS 생성 오류: {e}")
 
     def _save_scene_audio():
         """파일 업로드 시 1회 실행 -> 저장 -> scene field에 경로 저장"""

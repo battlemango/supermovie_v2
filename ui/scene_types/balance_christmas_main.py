@@ -1,6 +1,7 @@
 from pathlib import Path
 import streamlit as st
 from typing import Dict, Any
+from service.tts_service import TTSRequest
 from ui.components.text_component import render_text_input
 from ui.components.image_component import render_image_input
 from ui.components.audio_component import render_audio_input
@@ -37,7 +38,17 @@ class BalanceChristmasMain(BaseSceneType):
         
         col1, col2, col3 = st.columns([1, 1,1])
         with col1:
-            render_audio_input(self.scene, "title_audio")
+            # title이 없으면 None, 있으면 TTSRequest 생성 (output_path는 자동 생성)
+            title_text = self.scene.get("title")
+            tts_request = None
+            if title_text:
+                tts_request = TTSRequest(
+                    text=title_text, 
+                    voice_id="21m00Tcm4TlvDq8ikWAM", 
+                    model_id="eleven_multilingual_v2"
+                    # output_path는 None이면 자동으로 tts_outputs에 저장됨
+                )
+            render_audio_input(self.scene, "title_audio", tts_request)
         with col2:
             render_audio_input(self.scene, "a_audio")
         with col3:
