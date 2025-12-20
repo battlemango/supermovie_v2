@@ -155,15 +155,14 @@ class BaseSceneType(ABC):
         font=FontUtils.MAPLESTORY_LIGHT,
         font_size=80,
         color='white',
-        size=(1080, 1920),
+        screen_size=(1080, 1920),
+        text_width=1080,
         margin=(0, 0),
         text_align="center",
         start=0,
         end=-1,
         duration=1,
-        position=("center", "center"),
-        resized_width=-1,
-        resized_height=-1
+        position=(540, 960)
     ):
         """
         텍스트를 이미지로 변환하여 ImageClip으로 생성하는 메서드
@@ -174,15 +173,16 @@ class BaseSceneType(ABC):
             font (str): 폰트 경로
             font_size (int): 폰트 크기
             color (str): 텍스트 색상
-            size (tuple): 이미지 크기 (width, height)
-            margin (tuple): 여백 (x, y)
+            screen_size (tuple): 캔버스 크기 (width, height) - 전체 이미지 크기
+            text_width (int): 텍스트 한 줄 너비
+            margin (tuple): 여백 (x, y) - 현재 미사용
             text_align (str): 텍스트 정렬 ("center", "left", "right")
             start (float): 시작 시간
             end (float): 종료 시간 (-1이면 duration 사용)
             duration (float): 지속 시간
-            position (tuple): 위치
-            resized_width (int): 리사이즈할 너비 (-1이면 리사이즈 안 함)
-            resized_height (int): 리사이즈할 높이 (-1이면 리사이즈 안 함)
+            position (tuple): 캔버스 내에서 텍스트를 그릴 중점 위치 (x, y)
+                             텍스트는 position - (text_width/2, text_height/2)부터 그려짐
+                             ImageClip은 center로 배치됨
         
         Returns:
             ImageClip: 생성된 이미지 클립 또는 None
@@ -196,37 +196,47 @@ class BaseSceneType(ABC):
         
         try:
             # TextImage 서비스를 사용하여 텍스트를 이미지로 변환
+            # screen_size는 캔버스 크기, position은 텍스트를 그릴 중점 위치
             text_image = text_image_service.create_text_image(
                 text=text,
                 font_path=font,
                 font_size=font_size,
                 color=color,
-                size=size,
-                margin=margin,
+                screen_size=screen_size,
+                text_width=text_width,
+                position=position,
                 text_align=text_align
             )
             
             if not text_image:
                 return None
             
-            # 임시 파일로 저장
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
-                tmp_path = Path(tmp_file.name)
-                text_image.save(tmp_path, 'PNG')
-            
-            # ImageClip 생성
-            if end != -1:
-                clip = ImageClip(str(tmp_path)).with_start(start).with_position(position).with_end(end)
+            # 프로젝트 폴더의 temp 폴더에 저장 (상태 확인용)
+            project_path = project_manager.get_project_path()
+            if project_path:
+                # temp 폴더 생성
+                temp_folder = project_path / "temp"
+                temp_folder.mkdir(parents=True, exist_ok=True)
+                
+                # 파일명 생성 (scene_id와 텍스트 해시 사용)
+                import hashlib
+                text_hash = hashlib.md5(text.encode()).hexdigest()[:8]
+                filename = f"{self.scene_id}_text_{text_hash}.png"
+                tmp_path = temp_folder / filename
             else:
-                clip = ImageClip(str(tmp_path), duration=duration).with_start(start).with_position(position)
+                # 프로젝트가 없으면 시스템 임시 디렉토리 사용
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+                    tmp_path = Path(tmp_file.name)
             
-            # 리사이즈 처리
-            if resized_width != -1 and resized_height != -1:
-                clip = clip.resized(width=resized_width, height=resized_height)
-            elif resized_width != -1:
-                clip = clip.resized(width=resized_width)
-            elif resized_height != -1:
-                clip = clip.resized(height=resized_height)
+            # 이미지 저장
+            text_image.save(tmp_path, 'PNG')
+            print(f"[TEXT_IMAGE] 텍스트 이미지 저장: {tmp_path}")
+            
+            # ImageClip 생성 (position은 이미 텍스트 그릴 때 적용했으므로 center로 설정)
+            if end != -1:
+                clip = ImageClip(str(tmp_path)).with_start(start).with_position("center").with_end(end)
+            else:
+                clip = ImageClip(str(tmp_path), duration=duration).with_start(start).with_position("center")
             
             # clips에 추가
             self.clips.append(clip)
