@@ -4,6 +4,8 @@ from pathlib import Path
 from moviepy import AudioFileClip, CompositeAudioClip, CompositeVideoClip, ImageClip, TextClip
 from project_manager import project_manager
 from utils import FontUtils
+from service.text_image_service import text_image_service
+import tempfile
 
 
 class BaseSceneType(ABC):
@@ -145,3 +147,94 @@ class BaseSceneType(ABC):
 
         self.clips.append(clip)
         return clip
+    
+    def gen_rich_text_clip(
+        self,
+        text=None,
+        field=None,
+        font=FontUtils.MAPLESTORY_LIGHT,
+        font_size=80,
+        color='white',
+        size=(1080, 1920),
+        margin=(0, 0),
+        text_align="center",
+        start=0,
+        end=-1,
+        duration=1,
+        position=("center", "center"),
+        resized_width=-1,
+        resized_height=-1
+    ):
+        """
+        텍스트를 이미지로 변환하여 ImageClip으로 생성하는 메서드
+        
+        Args:
+            text (str, optional): 텍스트 (없으면 field에서 가져옴)
+            field (str, optional): 씬 필드명
+            font (str): 폰트 경로
+            font_size (int): 폰트 크기
+            color (str): 텍스트 색상
+            size (tuple): 이미지 크기 (width, height)
+            margin (tuple): 여백 (x, y)
+            text_align (str): 텍스트 정렬 ("center", "left", "right")
+            start (float): 시작 시간
+            end (float): 종료 시간 (-1이면 duration 사용)
+            duration (float): 지속 시간
+            position (tuple): 위치
+            resized_width (int): 리사이즈할 너비 (-1이면 리사이즈 안 함)
+            resized_height (int): 리사이즈할 높이 (-1이면 리사이즈 안 함)
+        
+        Returns:
+            ImageClip: 생성된 이미지 클립 또는 None
+        """
+        # 텍스트 가져오기
+        if not text:
+            text = self.scene.get(field, None) if field else None
+        
+        if not text:
+            return None
+        
+        try:
+            # TextImage 서비스를 사용하여 텍스트를 이미지로 변환
+            text_image = text_image_service.create_text_image(
+                text=text,
+                font_path=font,
+                font_size=font_size,
+                color=color,
+                size=size,
+                margin=margin,
+                text_align=text_align
+            )
+            
+            if not text_image:
+                return None
+            
+            # 임시 파일로 저장
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+                tmp_path = Path(tmp_file.name)
+                text_image.save(tmp_path, 'PNG')
+            
+            # ImageClip 생성
+            if end != -1:
+                clip = ImageClip(str(tmp_path)).with_start(start).with_position(position).with_end(end)
+            else:
+                clip = ImageClip(str(tmp_path), duration=duration).with_start(start).with_position(position)
+            
+            # 리사이즈 처리
+            if resized_width != -1 and resized_height != -1:
+                clip = clip.resized(width=resized_width, height=resized_height)
+            elif resized_width != -1:
+                clip = clip.resized(width=resized_width)
+            elif resized_height != -1:
+                clip = clip.resized(height=resized_height)
+            
+            # clips에 추가
+            self.clips.append(clip)
+            
+            return clip
+            
+        except Exception as e:
+            print(f"rich text clip 생성 중 오류 발생: {e}")
+            return None
+    
+    
