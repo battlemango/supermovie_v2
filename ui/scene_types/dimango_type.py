@@ -47,7 +47,7 @@ class DimangoType(BaseSceneType):
         #                                position=("center", y_variabtion))
        
     
-        title_text_clip = self.gen_rich_text_clip(field="title", font=FontUtils.MAPLESTORY_BOLD,color='black',text_align="center",start=0,duration=max_duration, position=(540, 100))
+        title_text_clip = self.gen_rich_text_clip(field="title", font=FontUtils.MAPLESTORY_BOLD,color='black',text_align="center",start=0,duration=max_duration, position=(540, 400))
                     
         
         self.gen_image_clip(field="center_image", start=0.5, duration=max_duration, resized_width=300, position=("center", 400+y_variabtion))
