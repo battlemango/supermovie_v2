@@ -1,10 +1,16 @@
 """
 텍스트를 이미지로 변환하는 서비스
 텍스트를 받아서 PIL Image로 변환하여 반환
+
+Rich Text 지원:
+- [color:red]텍스트[/color] 형식으로 색상 변경 가능
+- [color:#FF0000]텍스트[/color] 형식으로 HEX 색상도 지원
+- 예: "안녕하세요 [color:red]빨간색[/color] 텍스트입니다"
 """
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Tuple
+import re
 from utils import FontUtils
 
 
@@ -81,34 +87,115 @@ class TextImageService:
                 if not line.strip():  # 빈 줄은 스킵
                     continue
                 
-                # 각 줄의 너비 계산
-                line_bbox = draw.textbbox((0, 0), line, font=font)
+                # Rich text 파싱: [color:red]텍스트[/color] 형식 처리
+                text_segments = cls._parse_rich_text(line, rgb_color)
+                
+                # 마크업 태그를 제거한 순수 텍스트로 줄 너비 계산
+                plain_text = cls._remove_color_tags(line)
+                line_bbox = draw.textbbox((0, 0), plain_text, font=font)
                 line_width = line_bbox[2] - line_bbox[0]
                 
-                # text_align에 따라 x 좌표 계산 (각 줄을 개별적으로 정렬)
+                # text_align에 따라 시작 x 좌표 계산
                 if text_align == "center":
                     # text_width 내에서 중앙 정렬
-                    x = pos_x - (line_width // 2)
+                    start_x = pos_x - (line_width // 2)
                 elif text_align == "right":
                     # text_width 내에서 오른쪽 정렬
-                    x = pos_x - line_width
+                    start_x = pos_x - line_width
                 else:  # left
                     # text_width 내에서 왼쪽 정렬
-                    x = pos_x
+                    start_x = pos_x
                 
                 # y 좌표 계산 (전체 텍스트 블록의 중점 기준)
                 # 첫 번째 줄의 y 좌표 = position.y - (전체 높이 / 2) + (텍스트 높이 / 2)
                 # 이후 줄은 line_height만큼 아래로 이동
                 y = pos_y - (total_height // 2) + (line_idx * line_height) + (text_height // 2)
                 
-                # 텍스트 그리기
-                draw.text((x, y), line, font=font, fill=rgb_color)
+                # 각 텍스트 구간을 순차적으로 그리기
+                current_x = start_x
+                for segment_text, segment_color in text_segments:
+                    if not segment_text:
+                        continue
+                    
+                    # 현재 구간의 너비 계산
+                    segment_bbox = draw.textbbox((0, 0), segment_text, font=font)
+                    segment_width = segment_bbox[2] - segment_bbox[0]
+                    
+                    # 텍스트 그리기
+                    draw.text((current_x, y), segment_text, font=font, fill=segment_color)
+                    
+                    # 다음 구간의 x 좌표로 이동
+                    current_x += segment_width
             
             return img
             
         except Exception as e:
             print(f"텍스트 이미지 생성 중 오류 발생: {e}")
             return None
+    
+    @staticmethod
+    def _parse_rich_text(text: str, default_color: tuple) -> List[Tuple[str, tuple]]:
+        """
+        Rich text를 파싱하여 (텍스트, 색상) 튜플 리스트로 변환
+        
+        Args:
+            text (str): 마크업이 포함된 텍스트 (예: "안녕[color:red]빨강[/color]하세요")
+            default_color (tuple): 기본 색상 (RGB 튜플)
+        
+        Returns:
+            List[Tuple[str, tuple]]: (텍스트, 색상) 튜플 리스트
+        """
+        segments = []
+        current_color = default_color
+        
+        # [color:색상]...[/color] 패턴 찾기
+        # 정규식: \[color:([^\]]+)\](.*?)\[/color\]
+        pattern = r'\[c:([^\]]+)\](.*?)\[/c\]'
+        
+        last_end = 0
+        for match in re.finditer(pattern, text):
+            # 태그 이전의 텍스트 추가
+            if match.start() > last_end:
+                plain_text = text[last_end:match.start()]
+                if plain_text:
+                    segments.append((plain_text, current_color))
+            
+            # 색상 태그 내부의 텍스트 추가
+            color_str = match.group(1)  # 색상 문자열
+            colored_text = match.group(2)  # 색상이 적용될 텍스트
+            
+            # 색상 파싱
+            segment_color = TextImageService._parse_color(color_str)
+            segments.append((colored_text, segment_color))
+            
+            last_end = match.end()
+        
+        # 마지막 태그 이후의 텍스트 추가
+        if last_end < len(text):
+            plain_text = text[last_end:]
+            if plain_text:
+                segments.append((plain_text, current_color))
+        
+        # 태그가 없으면 전체 텍스트를 기본 색상으로 반환
+        if not segments:
+            segments.append((text, default_color))
+        
+        return segments
+    
+    @staticmethod
+    def _remove_color_tags(text: str) -> str:
+        """
+        텍스트에서 색상 태그를 제거하여 순수 텍스트만 반환
+        
+        Args:
+            text (str): 마크업이 포함된 텍스트
+        
+        Returns:
+            str: 태그가 제거된 순수 텍스트
+        """
+        # [color:...]...[/color] 패턴 제거
+        pattern = r'\[c:[^\]]+\](.*?)\[/c\]'
+        return re.sub(pattern, r'\1', text)
     
     @staticmethod
     def _parse_color(color: str) -> tuple:

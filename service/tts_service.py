@@ -3,6 +3,7 @@ ElevenLabs TTS 서비스
 텍스트를 음성으로 변환하고 파일로 저장하는 서비스
 """
 import requests
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -96,6 +97,21 @@ class TTSService:
     # API 엔드포인트
     BASE_URL = "https://api.elevenlabs.io/v1/text-to-speech"
     
+    @staticmethod
+    def _remove_color_tags(text: str) -> str:
+        """
+        텍스트에서 색상 태그를 제거하여 순수 텍스트만 반환
+        
+        Args:
+            text (str): 마크업이 포함된 텍스트 (예: "안녕[c:red]빨강[/c]하세요")
+        
+        Returns:
+            str: 태그가 제거된 순수 텍스트 (예: "안녕빨강하세요")
+        """
+        # [c:...]...[/c] 패턴 제거
+        pattern = r'\[c:[^\]]+\](.*?)\[/c\]'
+        return re.sub(pattern, r'\1', text)
+    
     @classmethod
     def generate(cls, request: TTSRequest) -> Optional[Path]:
         """
@@ -108,11 +124,14 @@ class TTSService:
             Path: 저장된 파일 경로 (실패 시 None)
         """
         try:
+            # 텍스트에서 색상 태그 제거 (TTS는 순수 텍스트만 필요)
+            clean_text = cls._remove_color_tags(request.text)
+            
             # output_path가 없으면 자동으로 tts_outputs 폴더에 저장
             if request.output_path is None:
                 import hashlib
                 import time
-                # 텍스트 기반으로 고유한 파일명 생성
+                # 텍스트 기반으로 고유한 파일명 생성 (원본 텍스트 사용)
                 text_hash = hashlib.md5(request.text.encode()).hexdigest()[:8]
                 timestamp = int(time.time())
                 output_path = f"tts_outputs/tts_{timestamp}_{text_hash}.mp3"
@@ -129,9 +148,9 @@ class TTSService:
                 "xi-api-key": cls.API_KEY
             }
             
-            # 요청 데이터 설정
+            # 요청 데이터 설정 (태그가 제거된 순수 텍스트 사용)
             data = {
-                "text": request.text,
+                "text": clean_text,
                 "model_id": request.model_id,
                 "voice_settings": {
                     "stability": 0.5,
